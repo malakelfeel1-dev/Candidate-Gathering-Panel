@@ -17,50 +17,19 @@ const COLORS = {
   relay: "#fbd9cf",
 };
 
-export default function CandidatePanel() {
-  const [configName, setConfigName] = useState("stun");
-
-  const iceServers = CONFIGS[configName];
-
-  const {
-    candidates,
-    gatheringState,
-    elapsed,
-  } = useIceCandidates(iceServers);
-
+function CandidateTable({ title, candidates }) {
   const sorted = [...candidates].sort(
     (a, b) => b.priority - a.priority
   );
 
   return (
-    <div style={{ padding: "24px" }}>
-      <h1>ICE Candidate Panel</h1>
-
-      <label>Configuration: </label>
-
-      <select
-        value={configName}
-        onChange={(e) => setConfigName(e.target.value)}
-      >
-        <option value="none">No STUN</option>
-        <option value="stun">Google STUN</option>
-        <option value="wrong">Unreachable STUN</option>
-      </select>
-
-      <p>
-        Gathering State: {gatheringState}
-      </p>
-
-      <p>
-        Gathering Time:{" "}
-        {elapsed !== null ? `${elapsed} ms` : "Gathering..."}
-      </p>
+    <section style={{ marginTop: "25px" }}>
+      <h2>{title}</h2>
 
       <table
         style={{
           width: "100%",
           borderCollapse: "collapse",
-          marginTop: "20px",
         }}
       >
         <thead>
@@ -92,12 +61,66 @@ export default function CandidatePanel() {
           {sorted.length === 0 && (
             <tr>
               <td colSpan={5}>
-                Waiting for candidates...
+                No {title} found.
               </td>
             </tr>
           )}
         </tbody>
       </table>
+    </section>
+  );
+}
+
+export default function CandidatePanel() {
+  const [configName, setConfigName] = useState("stun");
+
+  const iceServers = CONFIGS[configName];
+
+  const {
+    candidates,
+    gatheringState,
+    elapsed,
+  } = useIceCandidates(iceServers);
+
+  const udpCandidates = candidates.filter(
+    (c) => c.protocol?.toLowerCase() === "udp"
+  );
+
+  const tcpCandidates = candidates.filter(
+    (c) => c.protocol?.toLowerCase() === "tcp"
+  );
+
+  return (
+    <div style={{ padding: "24px" }}>
+      <h1>ICE Candidate Panel</h1>
+
+      <label>Configuration: </label>
+
+      <select
+        value={configName}
+        onChange={(e) => setConfigName(e.target.value)}
+      >
+        <option value="none">No STUN</option>
+        <option value="stun">Google STUN</option>
+        <option value="wrong">Unreachable STUN</option>
+      </select>
+
+      <p>Gathering State: {gatheringState}</p>
+
+      <p>
+        Gathering Time:{" "}
+        {elapsed !== null ? `${elapsed} ms` : "Gathering..."}
+      </p>
+
+      <CandidateTable
+        title="UDP Candidates"
+        candidates={udpCandidates}
+      />
+
+      <CandidateTable
+        title="TCP Candidates"
+        candidates={tcpCandidates}
+      />
     </div>
   );
 }
