@@ -1,6 +1,5 @@
-
-import { useEffect, useState } from "react";
-import { gatherCandidates } from "../lib/gatherCandidates";
+import { useState } from "react";
+import { useIceCandidates } from "./useIceCandidates";
 
 const CONFIGS = {
   none: [],
@@ -20,52 +19,14 @@ const COLORS = {
 
 export default function CandidatePanel() {
   const [configName, setConfigName] = useState("stun");
-  const [candidates, setCandidates] = useState([]);
-  const [elapsed, setElapsed] = useState(null);
-  const [gatheringState, setGatheringState] = useState("new");
 
   const iceServers = CONFIGS[configName];
 
-  useEffect(() => {
-    let active = true;
-
-    setCandidates([]);
-    setElapsed(null);
-    setGatheringState("new");
-
-    const start = performance.now();
-
-    const stop = gatherCandidates({
-      iceServers,
-
-      onCandidate: (candidate) => {
-        if (!active) return;
-
-        setCandidates((prev) => [
-          ...prev,
-          candidate,
-        ]);
-      },
-
-      onDone: () => {
-        if (!active) return;
-
-        const end = performance.now();
-        setElapsed(Math.round(end - start));
-      },
-
-      onStateChange: (state) => {
-        if (!active) return;
-
-        setGatheringState(state);
-      },
-    });
-
-    return () => {
-      active = false;
-      stop();
-    };
-  }, [iceServers]);
+  const {
+    candidates,
+    gatheringState,
+    elapsed,
+  } = useIceCandidates(iceServers);
 
   const sorted = [...candidates].sort(
     (a, b) => b.priority - a.priority
